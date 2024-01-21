@@ -17,16 +17,19 @@ package main
 import (
 	"fmt"
 	"github.com/charmbracelet/glamour"
+	"github.com/nohe427/expensive-water/config"
+	"github.com/nohe427/expensive-water/genai"
+	"github.com/nohe427/expensive-water/gh"
 )
 
 func main() {
-	c, err := LoadConfig("")
+	c, err := config.LoadConfig("")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	githubClient := GenerateClient(c.GetGitHubKey())
-	client := NewGeminiClient(c.GetGeminiKey())
+	githubClient := gh.GenerateClient(c.GetGitHubKey())
+	client := genai.NewGeminiClient(c.GetGeminiKey())
 	repo, err := githubClient.GetRepo("firebase", "flutterfire")
 	if err != nil {
 		fmt.Println(err)
