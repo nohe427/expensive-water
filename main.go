@@ -24,8 +24,8 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	githubClient := GenerateClient(c.Config.GitHubKey)
-	client := NewGeminiClient(c.Config.GeminiKey)
+	githubClient := GenerateClient(c.GetGitHubKey())
+	client := NewGeminiClient(c.GetGeminiKey())
 	repo, err := githubClient.GetRepo("firebase", "flutterfire")
 	if err != nil {
 		fmt.Println(err)

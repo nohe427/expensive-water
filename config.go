@@ -121,14 +121,14 @@ func createConfig(Location string) error {
 	return nil
 }
 
-func (c *Config) GetGitHubKey() {
-
+func (c *Config) GetGitHubKey() string {
+	return c.Config.GitHubKey
 }
 
-func (c *Config) GetGeminiKey() {
-
+func (c *Config) GetGeminiKey() string {
+	return c.Config.GeminiKey
 }
 
-func (c *Config) GetVertexKey() {
-
+func (c *Config) GetVertexKey() string {
+	return c.Config.VertexKey
 }
