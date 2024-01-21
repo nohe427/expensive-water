@@ -31,7 +31,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	issue, err := githubClient.GetIssue(repo, 1041) //10593) // summarrizing breaks with 1041
+	issue, err := githubClient.GetIssue(repo, 10593) // summarrizing breaks with 1041
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -65,7 +65,7 @@ BEGIN OUTPUT FORMAT
 
 	# Notable comments from issue
 	 
-	Put a bulleted list of notable comments about the issue here
+	Put a bulleted list of top three notable comments about the issue here
 
 	# Summarization
 
@@ -89,8 +89,6 @@ END OUTPUT FORMAT
 		for _, issue := range issueComments[lastIndex:] {
 			lastIndex = lastIndex + 1
 			count := client.TokenCount(issue.GetBody())
-			fmt.Println(currentTokenCount + count)
-			fmt.Println(lastIndex)
 			if currentTokenCount+count > tokenLimit {
 				break
 			}
@@ -98,12 +96,13 @@ END OUTPUT FORMAT
 			currentTokenCount = currentTokenCount + count
 		}
 		fmt.Println("Summarizing")
-		currSum = client.Summarize(fmt.Sprintf(defaultSumStatement, issue.GetTitle(), issue.GetBody(), currSum, toSum))
+		currSum, err = client.Summarize(fmt.Sprintf(defaultSumStatement, issue.GetTitle(), issue.GetBody(), currSum, toSum))
+		if err != nil {
+			fmt.Println(err)
+		}
 		toSum = ""
 		currentTokenCount = client.TokenCount(fmt.Sprintf(defaultSumStatement, issue.GetTitle(), issue.GetBody(), currSum, toSum))
-		fmt.Printf("current token count %v last index %v\n", len(issueComments), lastIndex)
 		if len(issueComments) == lastIndex {
-			fmt.Println("breaking")
 			break
 		}
 	}

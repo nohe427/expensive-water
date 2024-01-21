@@ -16,6 +16,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/google/generative-ai-go/genai"
@@ -49,18 +51,25 @@ func (gc *GeminiClient) TokenCount(s string) int {
 	return int(resp.TotalTokens)
 }
 
-func (gc *GeminiClient) Summarize(s string) string {
+func (gc *GeminiClient) Summarize(s string) (string, error) {
 	ctx := context.Background()
 	aic, err := genai.NewClient(ctx, option.WithAPIKey(gc.ApiKey))
 	if err != nil {
 		panic(err)
 	}
 	model := aic.GenerativeModel("gemini-pro")
-	model.SetMaxOutputTokens(2048)
+	// model.SetMaxOutputTokens(2048)
 	model.SetTemperature(0.2)
 	resp, err := model.GenerateContent(ctx, genai.Text(s))
 	if err != nil {
 		panic(err)
+	}
+	if len(resp.Candidates) == 0 {
+		fmt.Println("No candidates found...")
+		return "", checkForFailReason(resp)
+	}
+	if resp.Candidates[0].FinishReason.String() != "FinishReasonStop" {
+		return "", errors.New(fmt.Sprintf("Finish reason: %v", resp.Candidates[0].FinishReason.String()))
 	}
 	var sb strings.Builder
 	for _, part := range resp.Candidates[0].Content.Parts {
@@ -69,5 +78,21 @@ func (gc *GeminiClient) Summarize(s string) string {
 			sb.WriteString(string(v))
 		}
 	}
-	return sb.String()
+	return sb.String(), nil
+}
+
+func checkForFailReason(resp *genai.GenerateContentResponse) error {
+	if resp.PromptFeedback.BlockReason.String() != "" {
+		return errors.New(resp.PromptFeedback.BlockReason.String())
+	}
+	if resp.PromptFeedback.BlockReason == 2 {
+		return errors.New("prompt blocked for unknown reasons")
+	}
+	var sb strings.Builder
+	for _, safetyRating := range resp.PromptFeedback.SafetyRatings {
+		if safetyRating.Blocked {
+			sb.WriteString(fmt.Sprintf("Category: %v Probability :%v\n", safetyRating.Category, safetyRating.Probability))
+		}
+	}
+	return errors.New(sb.String())
 }
