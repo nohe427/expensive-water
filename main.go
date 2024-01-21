@@ -16,6 +16,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/charmbracelet/glamour"
 )
 
 func main() {
@@ -106,5 +107,6 @@ END OUTPUT FORMAT
 			break
 		}
 	}
-	fmt.Println(currSum)
+	out, err := glamour.Render(currSum, "dracula")
+	fmt.Println(out)
 }
