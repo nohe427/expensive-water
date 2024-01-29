@@ -16,6 +16,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/nohe427/expensive-water/config"
@@ -23,6 +25,10 @@ import (
 	"github.com/nohe427/expensive-water/gh"
 	"github.com/spf13/cobra"
 )
+
+type Opt struct {
+	debug bool
+}
 
 // sumCmd represents the sum command
 var sumCmd = &cobra.Command{
@@ -35,6 +41,7 @@ issue. It will then summarize the issue and all of the comments in a neat-o
 fashion.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		opt := Opt{debug: false}
 		fmt.Println("sum called")
 		repo, err := cmd.Flags().GetString("repo")
 		if err != nil {
@@ -48,7 +55,13 @@ fashion.
 		if err != nil {
 			fmt.Println(err)
 		}
-		sum(repo, issue, org)
+		debug, err := cmd.Flags().GetBool("debug")
+		if err != nil {
+			fmt.Println(err)
+		}
+		opt.debug = debug
+
+		sum(repo, issue, org, opt)
 	},
 }
 
@@ -66,10 +79,10 @@ func init() {
 	sumCmd.Flags().StringP("repo", "r", "flutterfire", "The GitHub repo to summarize")
 	sumCmd.Flags().IntP("issue", "i", 1, "The GitHub issue to summarize")
 	sumCmd.Flags().StringP("org", "o", "firebase", "The GitHub org to summarize")
-
+	sumCmd.Flags().BoolP("debug", "d", false, "Whether to output files to the debug/ folder for reviewing prompts and outputs")
 }
 
-func sum(repo string, issue int, org string) {
+func sum(repo string, issue int, org string, opt Opt) {
 	c, err := config.LoadConfig("")
 	if err != nil {
 		fmt.Println(err)
@@ -132,6 +145,7 @@ END OUTPUT FORMAT
 
 	GITHUB ISSUE COMMENTS:%v`
 	currSum := "No Summary Yet"
+	prevSum := ""
 	sumSoFar := fmt.Sprintf(defaultSumStatement, i.GetTitle(), i.GetBody(), currSum, "")
 	currentTokenCount = client.TokenCount(sumSoFar)
 	for {
@@ -145,6 +159,7 @@ END OUTPUT FORMAT
 			currentTokenCount = currentTokenCount + count
 		}
 		fmt.Println("Summarizing")
+		prevSum = fmt.Sprintf(defaultSumStatement, i.GetTitle(), i.GetBody(), currSum, toSum)
 		currSum, err = client.Summarize(fmt.Sprintf(defaultSumStatement, i.GetTitle(), i.GetBody(), currSum, toSum))
 		if err != nil {
 			fmt.Println(err)
@@ -157,4 +172,35 @@ END OUTPUT FORMAT
 	}
 	out, err := glamour.Render(currSum, "dracula")
 	fmt.Println(out)
+
+	if opt.debug {
+		out, err := writeToDebugOutput(prevSum, "input.txt")
+		if err != nil {
+			fmt.Println("There was an error")
+		}
+		fmt.Printf("input written to %v\n", out)
+		out, err = writeToDebugOutput(currSum, "output.txt")
+		if err != nil {
+			fmt.Println("There was an error")
+		}
+		fmt.Printf("input written to %v\n", out)
+	}
+}
+
+var currentTmp string = ""
+
+func writeToDebugOutput(input string, filename string) (string, error) {
+	if currentTmp == "" {
+		tmpDir, err := os.MkdirTemp(os.TempDir(), "expensive-water")
+		if err != nil {
+			return "", err
+		}
+		currentTmp = tmpDir
+	}
+	outFile := filepath.Join(currentTmp, filename)
+	err := os.WriteFile(outFile, []byte(input), 0644)
+	if err != nil {
+		return "", err
+	}
+	return outFile, nil
 }
