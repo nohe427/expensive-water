@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"cloud.google.com/go/vertexai/genai"
-	"google.golang.org/api/option"
 )
 
 type VertexClient struct {
@@ -41,7 +40,7 @@ func NewVertexClient(opts ClientOptions) *VertexClient {
 
 func (gc *VertexClient) getClient() (*genai.Client, error) {
 	ctx := context.Background()
-	c, err := genai.NewClient(ctx, gc.Opts.ProjectId, gc.Opts.Region, option.WithAPIKey(gc.Opts.ApiKey))
+	c, err := genai.NewClient(ctx, gc.Opts.ProjectId, gc.Opts.Region)
 	if err != nil {
 		return nil, err
 	}
