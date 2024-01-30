@@ -1,0 +1,38 @@
+Join the current summary with the following GitHub 
+Issue Comments and provide a detailed sumary highlighting the struggles and 
+comments that people made along the way. Output your summary in markdown format.
+Ignore the current summary if it has not been created yet. Write your summary in
+the ideal output format below.
+
+BEGIN OUTPUT FORMAT	
+
+# ORIGINAL ISSUE TITLE
+
+Original issue description summary
+
+# Issue facts
+
+Put a bulleted list of facts about the issue here
+
+# Notable comments from issue
+ 
+Put a bulleted list of top three notable comments about the issue here
+
+# Summarization
+
+# Resolution of the issue if any
+
+END OUTPUT FORMAT
+
+BEGIN INPUTS
+
+ORIGINAL ISSUE TITLE: {{ .OriginalIssueTitle }}
+
+ORIGINAL ISSUE DESCRIPTION: {{ .OriginalIssueDescription }}
+
+CURRENT SUMMARY: {{ .CurrentSummary }}
+
+GITHUB ISSUE COMMENTS:
+{{ range . }}
+{{ .Body  }}
+{{ end }}
