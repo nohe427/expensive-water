@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,30 +20,40 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/generative-ai-go/genai"
+	"cloud.google.com/go/vertexai/genai"
 	"google.golang.org/api/option"
 )
 
-type GenClient interface {
-	TokenCount(s string) int
-	Summarize(s string) (string, error)
-}
-
-type GeminiClient struct {
+type VertexClient struct {
 	GenClient
-	ApiKey string
+	Opts ClientOptions
 }
 
-func NewGeminiClient(apiKey string) *GeminiClient {
-	return &GeminiClient{ApiKey: apiKey}
+type ClientOptions struct {
+	ApiKey    string
+	Region    string
+	ProjectId string
 }
 
-func (gc *GeminiClient) TokenCount(s string) int {
+func NewVertexClient(opts ClientOptions) *VertexClient {
+	return &VertexClient{Opts: opts}
+}
+
+func (gc *VertexClient) getClient() (*genai.Client, error) {
 	ctx := context.Background()
-	aic, err := genai.NewClient(ctx, option.WithAPIKey(gc.ApiKey))
+	c, err := genai.NewClient(ctx, gc.Opts.ProjectId, gc.Opts.Region, option.WithAPIKey(gc.Opts.ApiKey))
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func (gc *VertexClient) TokenCount(s string) int {
+	aic, err := gc.getClient()
 	if err != nil {
 		panic(err)
 	}
+	ctx := context.Background()
 	model := aic.GenerativeModel("gemini-pro")
 	resp, err := model.CountTokens(ctx, genai.Text(s))
 	if err != nil {
@@ -52,9 +62,9 @@ func (gc *GeminiClient) TokenCount(s string) int {
 	return int(resp.TotalTokens)
 }
 
-func (gc *GeminiClient) Summarize(s string) (string, error) {
+func (gc *VertexClient) Summarize(s string) (string, error) {
 	ctx := context.Background()
-	aic, err := genai.NewClient(ctx, option.WithAPIKey(gc.ApiKey))
+	aic, err := gc.getClient()
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +77,7 @@ func (gc *GeminiClient) Summarize(s string) (string, error) {
 	}
 	if len(resp.Candidates) == 0 {
 		fmt.Println("No candidates found...")
-		return "", checkForFailReason(resp)
+		return "", checkForVertexFailReason(resp)
 	}
 	if resp.Candidates[0].FinishReason.String() != "FinishReasonStop" {
 		return "", errors.New(fmt.Sprintf("Finish reason: %v", resp.Candidates[0].FinishReason.String()))
@@ -82,7 +92,7 @@ func (gc *GeminiClient) Summarize(s string) (string, error) {
 	return sb.String(), nil
 }
 
-func checkForFailReason(resp *genai.GenerateContentResponse) error {
+func checkForVertexFailReason(resp *genai.GenerateContentResponse) error {
 	if resp.PromptFeedback.BlockReason.String() != "" {
 		return errors.New(resp.PromptFeedback.BlockReason.String())
 	}
