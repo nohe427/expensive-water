@@ -27,7 +27,8 @@ import (
 )
 
 type Opt struct {
-	debug bool
+	debug  bool
+	vertex bool
 }
 
 // sumCmd represents the sum command
@@ -41,7 +42,7 @@ issue. It will then summarize the issue and all of the comments in a neat-o
 fashion.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		opt := Opt{debug: false}
+		opt := Opt{debug: false, vertex: false}
 		fmt.Println("sum called")
 		repo, err := cmd.Flags().GetString("repo")
 		if err != nil {
@@ -60,6 +61,11 @@ fashion.
 			fmt.Println(err)
 		}
 		opt.debug = debug
+		vertex, err := cmd.Flags().GetBool("vertex")
+		if err != nil {
+			fmt.Println(err)
+		}
+		opt.vertex = vertex
 
 		sum(repo, issue, org, opt)
 	},
@@ -80,6 +86,7 @@ func init() {
 	sumCmd.Flags().IntP("issue", "i", 1, "The GitHub issue to summarize")
 	sumCmd.Flags().StringP("org", "o", "firebase", "The GitHub org to summarize")
 	sumCmd.Flags().BoolP("debug", "d", false, "Whether to output files to the debug/ folder for reviewing prompts and outputs")
+	sumCmd.Flags().BoolP("vertex", "v", false, "Whether to use Vertex AI instead of Gemini")
 }
 
 func sum(repo string, issue int, org string, opt Opt) {
@@ -89,7 +96,16 @@ func sum(repo string, issue int, org string, opt Opt) {
 		return
 	}
 	ghc := gh.GenerateClient(c.GetGitHubKey())
-	client := genai.NewGeminiClient(c.GetGeminiKey())
+	var client genai.GenClient
+	if opt.vertex {
+		opts := genai.ClientOptions{}
+		opts.ApiKey = c.GetVertexKey()
+		opts.Region = "us-central1"
+		opts.ProjectId = "art-transfer"
+		client = genai.NewVertexClient(opts)
+	} else {
+		client = genai.NewGeminiClient(c.GetGeminiKey())
+	}
 	r, err := ghc.GetRepo(org, repo)
 	if err != nil {
 		fmt.Println(err)

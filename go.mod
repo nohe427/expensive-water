@@ -10,10 +10,14 @@ require (
 )
 
 require (
+	cloud.google.com/go v0.111.0 // indirect
 	cloud.google.com/go/ai v0.3.0 // indirect
+	cloud.google.com/go/aiplatform v1.58.0 // indirect
 	cloud.google.com/go/compute v1.23.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/iam v1.1.5 // indirect
 	cloud.google.com/go/longrunning v0.5.4 // indirect
+	cloud.google.com/go/vertexai v0.6.0 // indirect
 	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/aymanbagabas/go-osc52 v1.0.3 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
