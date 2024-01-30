@@ -16,7 +16,6 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -32,6 +31,8 @@ type ConfigFile struct {
 	GitHubKey string `json:"github_key"`
 	GeminiKey string `json:"gemini_key"`
 	VertexKey string `json:"vertex_key"`
+	Region    string `json:"region"`
+	ProjectID string `json:"project_id"`
 }
 
 type NewConfigError struct {
@@ -43,23 +44,23 @@ func (e *NewConfigError) Error() string {
 }
 
 func LoadConfig(Location string) (*Config, error) {
-	config := Location
-	c := &Config{Location: config}
+	configLoc := Location
+	c := &Config{Location: configLoc}
 	var err error = nil
 	if Location == "" {
-		config, err = configLocation()
+		configLoc, err = configLocation()
 		if err != nil {
 			return nil, err
 		}
-		c.Location = config
+		c.Location = configLoc
 	}
-	_, err = os.Stat(config)
+	_, err = os.Stat(configLoc)
 	if os.IsNotExist(err) {
-		err := createConfig(config)
+		err := createConfig(configLoc)
 		if err != nil {
 			return c, err
 		}
-		return c, errors.New("Config file is new")
+		return c, &NewConfigError{Location: configLoc}
 	}
 	err = c.loadConfigValues()
 	if err != nil {
@@ -109,7 +110,7 @@ func createConfig(Location string) error {
 	}
 	defer file.Close()
 
-	defaultConfig := &ConfigFile{GitHubKey: "INSERT KEY HERE", GeminiKey: "INSERT KEY HERE", VertexKey: "INSERT KEY HERE"}
+	defaultConfig := &ConfigFile{GitHubKey: "INSERT KEY HERE", GeminiKey: "INSERT KEY HERE", VertexKey: "INSERT KEY HERE", Region: "us-central1", ProjectID: "Only required if using vertexAI"}
 	b, err := json.Marshal(defaultConfig)
 	if err != nil {
 		return err
@@ -131,4 +132,12 @@ func (c *Config) GetGeminiKey() string {
 
 func (c *Config) GetVertexKey() string {
 	return c.Config.VertexKey
+}
+
+func (c *Config) GetRegion() string {
+	return c.Config.Region
+}
+
+func (c *Config) GetProjectID() string {
+	return c.Config.ProjectID
 }

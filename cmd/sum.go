@@ -100,8 +100,8 @@ func sum(repo string, issue int, org string, opt Opt) {
 	if opt.vertex {
 		opts := genai.ClientOptions{}
 		opts.ApiKey = c.GetVertexKey()
-		opts.Region = "us-central1"
-		opts.ProjectId = "art-transfer"
+		opts.Region = c.GetRegion()
+		opts.ProjectId = c.GetProjectID()
 		client = genai.NewVertexClient(opts)
 	} else {
 		client = genai.NewGeminiClient(c.GetGeminiKey())
