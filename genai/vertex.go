@@ -34,6 +34,8 @@ type ClientOptions struct {
 	ProjectId string
 }
 
+var MODEL_NAME = "gemini-pro"
+
 func NewVertexClient(opts ClientOptions) *VertexClient {
 	return &VertexClient{Opts: opts}
 }
@@ -53,7 +55,7 @@ func (gc *VertexClient) TokenCount(s string) int {
 		panic(err)
 	}
 	ctx := context.Background()
-	model := aic.GenerativeModel("gemini-pro")
+	model := aic.GenerativeModel(MODEL_NAME)
 	resp, err := model.CountTokens(ctx, genai.Text(s))
 	if err != nil {
 		panic(err)
@@ -67,7 +69,7 @@ func (gc *VertexClient) Summarize(s string) (string, error) {
 	if err != nil {
 		panic(err)
 	}
-	model := aic.GenerativeModel("gemini-pro")
+	model := aic.GenerativeModel(MODEL_NAME)
 	// model.SetMaxOutputTokens(2048)
 	model.SetTemperature(0.2)
 	resp, err := model.GenerateContent(ctx, genai.Text(s))
