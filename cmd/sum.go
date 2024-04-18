@@ -122,7 +122,8 @@ func sum(repo string, issue int, org string, opt Opt) {
 		return
 	}
 	lastIndex := 0
-	tokenLimit := 30_720
+	// tokenLimit := 30_720
+	tokenLimit := 1_000_000
 	toSum := ""
 	currentTokenCount := 0
 	defaultSumStatement := `Join the current summary with the following GitHub 
