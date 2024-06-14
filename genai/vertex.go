@@ -35,7 +35,8 @@ type ClientOptions struct {
 }
 
 // var MODEL_NAME = "gemini-pro"
-var MODEL_NAME = "gemini-1.5-pro-preview-0409"
+// var MODEL_NAME = "gemini-1.5-pro-preview-0409"
+var MODEL_NAME = "gemini-1.5-flash-001"
 
 func NewVertexClient(opts ClientOptions) *VertexClient {
 	return &VertexClient{Opts: opts}
